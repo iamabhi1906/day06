@@ -1,66 +1,54 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from './store';
+import { useEffect, useState } from 'react';
+import { Box, Container, Typography } from '@mui/material';
+import SearchBar from './search-bar';
+import styles from './page.module.css';
+import RecipeSection from './components/RecipeSection';
+import { fetchRecipes } from './recipe-thunk';
 
 export default function Home() {
+  const [q, setQ] = useState<string>('');
+  const [limit] = useState<number>(16);
+  const [skip, setSkip] = useState<number>(0);
+  const dispatch = useDispatch<AppDispatch>();
+  const { recipes, loading, hasMore } = useSelector((state: RootState) => state.recipe);
+
+  useEffect(() => {
+    dispatch(fetchRecipes({ q, limit, skip }));
+  }, [dispatch, q, limit, skip]);
+
+  const handleQueryChange = (value: string) => {
+    setQ(value);
+    setSkip(0);
+  };
+
+  const loadMore = () => {
+    if (!loading && hasMore) {
+      setSkip((previousSkip) => previousSkip + limit);
+    }
+  };
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <Container maxWidth="xl" className={styles.container}>
+      <Box className={styles.hero}>
+        <Typography variant="overline" color="primary">
+          Recipe
+        </Typography>
+        <Typography variant="h2" className={styles.mainHeading} sx={{ fontWeight: 800 }}>
+          Fresh recipes, and quick cooking inspiration
+        </Typography>
+      </Box>
+
+      <Box className={styles.searchBar}>
+        <SearchBar label="Find your Recipe" query={q} setQuery={handleQueryChange} />
+        <Typography variant="body2" color="text.secondary">
+          {loading ? 'Loading fresh recipes…' : `${recipes.length} recipes displayed`}
+        </Typography>
+      </Box>
+
+      <RecipeSection recipes={recipes} loading={loading} hasMore={hasMore} loadMore={loadMore} />
+    </Container>
   );
 }
